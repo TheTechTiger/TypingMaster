@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard - TypingMaster</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        }
+        
+        .leaderboard-item {
+            transition: all 0.3s ease;
+        }
+        
+        .leaderboard-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .rank-1 {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            border-left: 4px solid #d97706;
+        }
+        
+        .rank-2 {
+            background: linear-gradient(135deg, #e5e7eb, #d1d5db);
+            border-left: 4px solid #9ca3af;
+        }
+        
+        .rank-3 {
+            background: linear-gradient(135deg, #fdba74, #fb923c);
+            border-left: 4px solid #ea580c;
+        }
+        
+        .trophy-animation {
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <!-- Navigation -->
+    <nav class="gradient-bg shadow-lg">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div class="text-white text-2xl font-bold">
+                    <i class="fas fa-keyboard mr-2"></i>TypingMaster
+                </div>
+                <div class="flex items-center space-x-6">
+                    <a href="/dashboard" class="text-white hover:text-gray-200 transition duration-300">
+                        <i class="fas fa-home mr-2"></i>Dashboard
+                    </a>
+                    <a href="/test" class="text-white hover:text-gray-200 transition duration-300">
+                        <i class="fas fa-play mr-2"></i>Start Test
+                    </a>
+                    <a href="/leaderboard" class="text-white hover:text-gray-200 transition duration-300 font-semibold">
+                        <i class="fas fa-trophy mr-2"></i>Leaderboard
+                    </a>
+                    <a href="/logout" class="text-white hover:text-gray-200 transition duration-300">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-6 py-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-trophy text-yellow-500 trophy-animation mr-3"></i>
+                Leaderboard
+            </h1>
+            <p class="text-gray-600 text-lg">See how you rank among the fastest typists!</p>
+        </div>
+
+        <!-- Top 3 Podium -->
+        {% if leaders|length >= 3 %}
+        <div class="flex justify-center items-end mb-12 space-x-4">
+            <!-- 2nd Place -->
+            <div class="text-center">
+                <div class="bg-gradient-to-t from-gray-400 to-gray-300 rounded-lg p-6 mb-4 shadow-lg">
+                    <div class="text-4xl text-white mb-2">🥈</div>
+                    <div class="text-white font-bold text-lg">{{ leaders[1].name }}</div>
+                    <div class="text-gray-200 text-sm">{{ leaders[1].best_wpm }} WPM</div>
+                </div>
+                <div class="bg-gradient-to-t from-gray-500 to-gray-400 h-20 rounded-t-lg flex items-center justify-center">
+                    <span class="text-white font-bold text-xl">2</span>
+                </div>
+            </div>
+
+            <!-- 1st Place -->
+            <div class="text-center">
+                <div class="bg-gradient-to-t from-yellow-500 to-yellow-400 rounded-lg p-8 mb-4 shadow-lg transform scale-110">
+                    <div class="text-5xl text-white mb-2">👑</div>
+                    <div class="text-white font-bold text-xl">{{ leaders[0].name }}</div>
+                    <div class="text-yellow-100 text-lg font-semibold">{{ leaders[0].best_wpm }} WPM</div>
+                </div>
+                <div class="bg-gradient-to-t from-yellow-600 to-yellow-500 h-28 rounded-t-lg flex items-center justify-center">
+                    <span class="text-white font-bold text-2xl">1</span>
+                </div>
+            </div>
+
+            <!-- 3rd Place -->
+            <div class="text-center">
+                <div class="bg-gradient-to-t from-orange-500 to-orange-400 rounded-lg p-6 mb-4 shadow-lg">
+                    <div class="text-4xl text-white mb-2">🥉</div>
+                    <div class="text-white font-bold text-lg">{{ leaders[2].name }}</div>
+                    <div class="text-orange-200 text-sm">{{ leaders[2].best_wpm }} WPM</div>
+                </div>
+                <div class="bg-gradient-to-t from-orange-600 to-orange-500 h-16 rounded-t-lg flex items-center justify-center">
+                    <span class="text-white font-bold text-xl">3</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Full Leaderboard -->
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-6">
+                    <h2 class="text-2xl font-bold text-white text-center">Top Performers</h2>
+                </div>
+                
+                <div class="divide-y divide-gray-200">
+                    {% for leader in leaders %}
+                    <div class="leaderboard-item p-6 flex items-center justify-between
+                        {% if loop.index == 1 %}rank-1 text-white{% elif loop.index == 2 %}rank-2{% elif loop.index == 3 %}rank-3{% endif %}">
+                        
+                        <div class="flex items-center space-x-4">
+                            <div class="flex-shrink-0 w-12 h-12 
+                                {% if loop.index <= 3 %}
+                                    bg-white text-gray-800
+                                {% else %}
+                                    bg-gray-200 text-gray-600
+                                {% endif %}
+                                rounded-full flex items-center justify-center font-bold text-lg">
+                                {% if loop.index == 1 %}
+                                    👑
+                                {% elif loop.index == 2 %}
+                                    🥈
+                                {% elif loop.index == 3 %}
+                                    🥉
+                                {% else %}
+                                    {{ loop.index }}
+                                {% endif %}
+                            </div>
+                            
+                            <div>
+                                <a href="/user/{{ leader.id }}" class="
+                                    {% if loop.index == 1 %}text-white hover:text-yellow-100
+                                    {% else %}text-gray-800 hover:text-blue-600
+                                    {% endif %} font-semibold text-lg transition duration-300">
+                                    {{ leader.name }}
+                                </a>
+                                <div class="
+                                    {% if loop.index == 1 %}text-yellow-100
+                                    {% else %}text-gray-600
+                                    {% endif %} text-sm">
+                                    {{ leader.total_tests }} tests completed
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-right">
+                            <div class="grid grid-cols-3 gap-6 text-center">
+                                <div>
+                                    <div class="font-bold text-xl
+                                        {% if loop.index == 1 %}text-white
+                                        {% else %}text-blue-600
+                                        {% endif %}">
+                                        {{ leader.best_wpm }}
+                                    </div>
+                                    <div class="text-xs
+                                        {% if loop.index == 1 %}text-yellow-100
+                                        {% else %}text-gray-500
+                                        {% endif %}">
+                                        Best WPM
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <div class="font-bold text-xl
+                                        {% if loop.index == 1 %}text-white
+                                        {% else %}text-green-600
+                                        {% endif %}">
+                                        {{ leader.avg_accuracy|round(1) }}%
+                                    </div>
+                                    <div class="text-xs
+                                        {% if loop.index == 1 %}text-yellow-100
+                                        {% else %}text-gray-500
+                                        {% endif %}">
+                                        Avg Accuracy
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <div class="font-bold text-xl
+                                        {% if loop.index == 1 %}text-white
+                                        {% else %}text-purple-600
+                                        {% endif %}">
+                                        {{ leader.current_streak }}
+                                    </div>
+                                    <div class="text-xs
+                                        {% if loop.index == 1 %}text-yellow-100
+                                        {% else %}text-gray-500
+                                        {% endif %}">
+                                        Day Streak
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Challenge Section -->
+        <div class="mt-12 text-center">
+            <div class="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-8 text-white">
+                <h3 class="text-2xl font-bold mb-4">Ready to Climb the Leaderboard? 🚀</h3>
+                <p class="text-lg mb-6 opacity-90">
+                    Take the typing test and see if you can beat the current champions!
+                </p>
+                <a href="/test" class="inline-flex items-center px-8 py-4 bg-white text-purple-600 font-semibold rounded-xl hover:bg-gray-100 transition duration-300 transform hover:scale-105 shadow-lg">
+                    <i class="fas fa-keyboard mr-3"></i>Start Typing Test
+                </a>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="mt-12 grid md:grid-cols-3 gap-6">
+            <div class="bg-white rounded-xl p-6 shadow-lg text-center">
+                <div class="text-3xl text-blue-500 mb-3">📊</div>
+                <div class="text-2xl font-bold text-gray-800">{{ leaders|length }}</div>
+                <div class="text-gray-600">Active Typists</div>
+            </div>
+            
+            <div class="bg-white rounded-xl p-6 shadow-lg text-center">
+                <div class="text-3xl text-green-500 mb-3">⚡</div>
+                <div class="text-2xl font-bold text-gray-800">
+                    {% if leaders %}{{ leaders[0].best_wpm }}{% else %}0{% endif %}
+                </div>
+                <div class="text-gray-600">Highest WPM</div>
+            </div>
+            
+            <div class="bg-white rounded-xl p-6 shadow-lg text-center">
+                <div class="text-3xl text-purple-500 mb-3">🔥</div>
+                <div class="text-2xl font-bold text-gray-800">
+                    {% if leaders %}
+                        {% set max_streak = leaders|map(attribute='longest_streak')|max %}
+                        {{ max_streak }}
+                    {% else %}0{% endif %}
+                </div>
+                <div class="text-gray-600">Longest Streak</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add some interactive effects
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate leaderboard items on scroll
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver(function(entries) {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+
+            // Observe all leaderboard items
+            document.querySelectorAll('.leaderboard-item').forEach((item, index) => {
+                item.style.opacity = '0';
+                item.style.transform = 'translateY(30px)';
+                item.style.transition = `opacity 0.6s ease ${index * 0.1}s, transform 0.6s ease ${index * 0.1}s`;
+                observer.observe(item);
+            });
+
+            // Add click effects to user links
+            document.querySelectorAll('a[href*="/user/"]').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    // Add loading state
+                    this.style.opacity = '0.7';
+                    this.innerHTML += ' <i class="fas fa-spinner fa-spin ml-1"></i>';
+                });
+            });
+        });
+
+        // Trophy bounce effect on hover
+        document.querySelector('.trophy-animation').addEventListener('mouseenter', function() {
+            this.style.animationDuration = '0.5s';
+        });
+
+        document.querySelector('.trophy-animation').addEventListener('mouseleave', function() {
+            this.style.animationDuration = '2s';
+        });
+    </script>
+</body>
+</html>

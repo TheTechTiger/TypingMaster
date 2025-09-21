@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Typing Test - TypingMaster</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        .typing-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2rem;
+            line-height: 1.8;
+            letter-spacing: 0.02em;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        }
+        
+        .correct-char {
+            background-color: #10b981;
+            color: white;
+        }
+        
+        .incorrect-char {
+            background-color: #ef4444;
+            color: white;
+        }
+        
+        .current-char {
+            background-color: #3b82f6;
+            color: white;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .stats-card {
+            transition: transform 0.3s ease;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .typing-input {
+            opacity: 0;
+            position: absolute;
+            left: -9999px;
+        }
+        
+        .result-modal {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+        }
+        
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #f59e0b;
+            pointer-events: none;
+            animation: confetti-fall 3s ease-out forwards;
+        }
+        
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <!-- Navigation -->
+    <nav class="gradient-bg shadow-lg">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div class="text-white text-2xl font-bold">
+                    <i class="fas fa-keyboard mr-2"></i>TypingMaster
+                </div>
+                <div class="flex items-center space-x-6">
+                    <a href="/dashboard" class="text-white hover:text-gray-200 transition duration-300">
+                        <i class="fas fa-home mr-2"></i>Dashboard
+                    </a>
+                    <a href="/leaderboard" class="text-white hover:text-gray-200 transition duration-300">
+                        <i class="fas fa-trophy mr-2"></i>Leaderboard
+                    </a>
+                    <a href="/logout" class="text-white hover:text-gray-200 transition duration-300">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-6 py-8">
+        <!-- Test Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Typing Speed Test</h1>
+            <p class="text-gray-600">Type the text below as accurately and quickly as possible</p>
+        </div>
+
+        <!-- Stats Display -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="stats-card bg-white rounded-xl p-6 shadow-lg text-center">
+                <div class="text-3xl text-blue-500 mb-2">⏱️</div>
+                <div class="text-2xl font-bold text-gray-800" id="timer">60</div>
+                <div class="text-gray-600 text-sm">Seconds Left</div>
+            </div>
+            
+            <div class="stats-card bg-white rounded-xl p-6 shadow-lg text-center">
+                <div class="text-3xl text-green-500 mb-2">⚡</div>
+                <div class="text-2xl font-bold text-gray-800" id="wpm">0</div>
+                <div class="text-gray-600 text-sm">WPM</div>
+            </div>
+            
+            <div class="stats-card bg-white rounded-xl p-6 shadow-lg text-center">
+                <div class="text-3xl text-purple-500 mb-2">🎯</div>
+                <div class="text-2xl font-bold text-gray-800" id="accuracy">100%</div>
+                <div class="text-gray-600 text-sm">Accuracy</div>
+            </div>
+            
+            <div class="stats-card bg-white rounded-xl p-6 shadow-lg text-center">
+                <div class="text-3xl text-orange-500 mb-2">❌</div>
+                <div class="text-2xl font-bold text-gray-800" id="errors">0</div>
+                <div class="text-gray-600 text-sm">Errors</div>
+            </div>
+        </div>
+
+        <!-- Typing Area -->
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white rounded-xl p-8 shadow-lg mb-6">
+                <div id="typing-text" class="typing-text text-gray-700 mb-6 p-4 bg-gray-50 rounded-lg min-h-32 leading-relaxed">
+                    Loading text...
+                </div>
+                
+                <input type="text" id="typing-input" class="typing-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                
+                <div class="text-center">
+                    <button id="start-btn" onclick="startTest()" class="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition duration-300 transform hover:scale-105 shadow-lg">
+                        <i class="fas fa-play mr-2"></i>Start Test
+                    </button>
+                    
+                    <button id="restart-btn" onclick="restartTest()" class="px-8 py-3 bg-gray-600 text-white font-semibold rounded-xl hover:bg-gray-700 transition duration-300 hidden ml-4">
+                        <i class="fas fa-redo mr-2"></i>Restart
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Result Modal -->
+    <div id="result-modal" class="fixed inset-0 result-modal hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-8 max-w-lg mx-4 text-center transform scale-95 transition-transform">
+            <div class="text-6xl mb-6">🎉</div>
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">Test Complete!</h2>
+            
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-blue-50 rounded-lg p-4">
+                    <div class="text-2xl font-bold text-blue-600" id="final-wpm">0</div>
+                    <div class="text-gray-600 text-sm">Words Per Minute</div>
+                </div>
+                <div class="bg-green-50 rounded-lg p-4">
+                    <div class="text-2xl font-bold text-green-600" id="final-accuracy">100%</div>
+                    <div class="text-gray-600 text-sm">Accuracy</div>
+                </div>
+            </div>
+            
+            <div id="badges-earned" class="mb-6 hidden">
+                <h3 class="text-lg font-semibold mb-3">🏆 Badges Earned!</h3>
+                <div id="badge-list" class="flex justify-center space-x-2"></div>
+            </div>
+            
+            <div id="motivational-quote" class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded">
+                <p class="italic text-gray-700"></p>
+            </div>
+            
+            <div class="flex space-x-3 justify-center">
+                <button onclick="playMotivationalSpeech()" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-300">
+                    <i class="fas fa-volume-up mr-2"></i>Hear Quote
+                </button>
+                <button onclick="closeModal()" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-300">
+                    <i class="fas fa-redo mr-2"></i>Test Again
+                </button>
+                <button onclick="goToDashboard()" class="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition duration-300">
+                    <i class="fas fa-chart-bar mr-2"></i>View Stats
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let testText = '';
+        let currentIndex = 0;
+        let startTime = null;
+        let timer = null;
+        let timeLeft = 60;
+        let isTestActive = false;
+        let correctChars = 0;
+        let totalChars = 0;
+        let errors = 0;
+        let motivationalQuote = '';
+
+        // Load typing text
+        async function loadTypingText() {
+            try {
+                const response = await fetch('/typing-text');
+                const data = await response.json();
+                testText = data.text;
+                displayText();
+            } catch (error) {
+                console.error('Error loading text:', error);
+                testText = "The quick brown fox jumps over the lazy dog. This sentence contains all letters of the alphabet and is perfect for typing practice.";
+                displayText();
+            }
+        }
+
+        // Display text with highlighting
+        function displayText() {
+            const textContainer = document.getElementById('typing-text');
+            let html = '';
+            
+            for (let i = 0; i < testText.length; i++) {
+                const char = testText[i];
+                let className = '';
+                
+                if (i < currentIndex) {
+                    className = 'correct-char';
+                } else if (i === currentIndex && isTestActive) {
+                    className = 'current-char';
+                }
+                
+                html += `<span class="${className}">${char === ' ' ? '&nbsp;' : char}</span>`;
+            }
+            
+            textContainer.innerHTML = html;
+        }
+
+        // Start test
+        function startTest() {
+            if (isTestActive) return;
+            
+            isTestActive = true;
+            startTime = Date.now();
+            currentIndex = 0;
+            correctChars = 0;
+            totalChars = 0;
+            errors = 0;
+            timeLeft = 60;
+            
+            document.getElementById('start-btn').classList.add('hidden');
+            document.getElementById('restart-btn').classList.remove('hidden');
+            document.getElementById('typing-input').focus();
+            
+            displayText();
+            startTimer();
+            
+            // Add event listener for typing
+            document.getElementById('typing-input').addEventListener('input', handleTyping);
+            document.addEventListener('keydown', preventBackspace);
+        }
+
+        // Handle typing
+        function handleTyping(e) {
+            if (!isTestActive) return;
+            
+            const input = e.target.value;
+            const lastChar = input[input.length - 1];
+            
+            if (currentIndex < testText.length) {
+                totalChars++;
+                
+                if (lastChar === testText[currentIndex]) {
+                    correctChars++;
+                    currentIndex++;
+                } else {
+                    errors++;
+                    // Mark as incorrect and move to next character
+                    const textContainer = document.getElementById('typing-text');
+                    const spans = textContainer.getElementsByTagName('span');
+                    if (spans[currentIndex]) {
+                        spans[currentIndex].className = 'incorrect-char';
+                    }
+                    currentIndex++;
+                }
+                
+                displayText();
+                updateStats();
+                
+                // Check if test is complete
+                if (currentIndex >= testText.length) {
+                    endTest();
+                }
+            }
+            
+            // Clear input
+            e.target.value = '';
+        }
+
+        // Prevent backspace
+        function preventBackspace(e) {
+            if (e.key === 'Backspace' && isTestActive) {
+                e.preventDefault();
+            }
+        }
+
+        // Start timer
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    endTest();
+                }
+            }, 1000);
+        }
+
+        // Update stats
+        function updateStats() {
+            const timeElapsed = (Date.now() - startTime) / 1000 / 60; // in minutes
+            const wpm = Math.round((correctChars / 5) / timeElapsed) || 0;
+            const accuracy = totalChars > 0 ? Math.round((correctChars / totalChars) * 100) : 100;
+            
+            document.getElementById('wpm').textContent = wpm;
+            document.getElementById('accuracy').textContent = accuracy + '%';
+            document.getElementById('errors').textContent = errors;
+        }
+
+        // End test
+        async function endTest() {
+            if (!isTestActive) return;
+            
+            isTestActive = false;
+            clearInterval(timer);
+            
+            document.getElementById('typing-input').removeEventListener('input', handleTyping);
+            document.removeEventListener('keydown', preventBackspace);
+            
+            const timeElapsed = (Date.now() - startTime) / 1000 / 60;
+            const finalWpm = Math.round((correctChars / 5) / timeElapsed) || 0;
+            const finalAccuracy = totalChars > 0 ? Math.round((correctChars / totalChars) * 100) : 100;
+            
+            // Submit results
+            try {
+                const response = await fetch('/submit-result', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        wpm: finalWpm,
+                        accuracy: finalAccuracy,
+                        duration: 60 - timeLeft
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    motivationalQuote = data.quote;
+                    showResults(finalWpm, finalAccuracy, data.badges || []);
+                }
+            } catch (error) {
+                console.error('Error submitting results:', error);
+                showResults(finalWpm, finalAccuracy, []);
+            }
+        }
+
+        // Show results modal
+        function showResults(wpm, accuracy, badges) {
+            document.getElementById('final-wpm').textContent = wpm;
+            document.getElementById('final-accuracy').textContent = accuracy + '%';
+            
+            // Show motivational quote
+            document.querySelector('#motivational-quote p').textContent = motivationalQuote;
+            
+            // Show badges if any
+            if (badges.length > 0) {
+                document.getElementById('badges-earned').classList.remove('hidden');
+                const badgeList = document.getElementById('badge-list');
+                badgeList.innerHTML = '';
+                
+                badges.forEach(badge => {
+                    const badgeDiv = document.createElement('div');
+                    badgeDiv.className = 'bg-yellow-400 text-white px-3 py-2 rounded-lg text-sm font-semibold';
+                    badgeDiv.textContent = badge.title || `${badge.days} Day Streak` || `${badge.wpm} WPM`;
+                    badgeList.appendChild(badgeDiv);
+                });
+                
+                // Add confetti effect
+                createConfetti();
+            }
+            
+            document.getElementById('result-modal').classList.remove('hidden');
+            document.getElementById('result-modal').classList.add('flex');
+            document.querySelector('#result-modal > div').classList.remove('scale-95');
+            document.querySelector('#result-modal > div').classList.add('scale-100');
+        }
+
+        // Create confetti effect
+        function createConfetti() {
+            const colors = ['#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#8b5cf6'];
+            
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDelay = Math.random() * 3 + 's';
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 3000);
+                }, i * 100);
+            }
+        }
+
+        // Play motivational speech
+        async function playMotivationalSpeech() {
+            if (!motivationalQuote) return;
+            
+            try {
+                const response = await fetch('/generate-speech', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: motivationalQuote
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success && data.audio) {
+                    const audioBlob = new Blob([Uint8Array.from(atob(data.audio), c => c.charCodeAt(0))], {type: 'audio/mp3'});
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const audio = new Audio(audioUrl);
+                    audio.play();
+                }
+            } catch (error) {
+                console.error('Error playing speech:', error);
+            }
+        }
+
+        // Close modal and restart
+        function closeModal() {
+            document.getElementById('result-modal').classList.add('hidden');
+            document.getElementById('result-modal').classList.remove('flex');
+            restartTest();
+        }
+
+        // Go to dashboard
+        function goToDashboard() {
+            window.location.href = '/dashboard';
+        }
+
+        // Restart test
+        function restartTest() {
+            isTestActive = false;
+            clearInterval(timer);
+            currentIndex = 0;
+            timeLeft = 60;
+            correctChars = 0;
+            totalChars = 0;
+            errors = 0;
+            
+            document.getElementById('timer').textContent = '60';
+            document.getElementById('wpm').textContent = '0';
+            document.getElementById('accuracy').textContent = '100%';
+            document.getElementById('errors').textContent = '0';
+            
+            document.getElementById('start-btn').classList.remove('hidden');
+            document.getElementById('restart-btn').classList.add('hidden');
+            document.getElementById('typing-input').value = '';
+            
+            loadTypingText();
+        }
+
+        // Initialize
+        loadTypingText();
+
+        // Focus input when clicking on text area
+        document.getElementById('typing-text').addEventListener('click', () => {
+            if (isTestActive) {
+                document.getElementById('typing-input').focus();
+            }
+        });
+    </script>
+</body>
+</html>

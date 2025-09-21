@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - TypingMaster</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .stat-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .badge-item {
+            transition: transform 0.2s ease;
+        }
+        
+        .badge-item:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <!-- Navigation -->
+    <nav class="gradient-bg shadow-lg">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div class="text-white text-2xl font-bold">
+                    <i class="fas fa-keyboard mr-2"></i>TypingMaster
+                </div>
+                <div class="flex items-center space-x-6">
+                    <a href="/dashboard" class="text-white hover:text-gray-200 transition duration-300">
+                        <i class="fas fa-home mr-2"></i>Dashboard
+                    </a>
+                    <a href="/test" class="text-white hover:text-gray-200 transition duration-300">
+                        <i class="fas fa-play mr-2"></i>Start Test
+                    </a>
+                    <a href="/leaderboard" class="text-white hover:text-gray-200 transition duration-300">
+                        <i class="fas fa-trophy mr-2"></i>Leaderboard
+                    </a>
+                    <a href="/logout" class="text-white hover:text-gray-200 transition duration-300">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-6 py-8">
+        <!-- Welcome Section -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                Welcome back, {{ session.user_name }}! 👋
+            </h1>
+            <p class="text-gray-600">Ready to improve your typing skills today?</p>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="stat-card bg-white rounded-xl p-6 shadow-lg border-l-4 border-blue-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Current Streak</p>
+                        <p class="text-2xl font-bold text-gray-800">{{ stats.current_streak }} days</p>
+                    </div>
+                    <div class="text-3xl text-blue-500">🔥</div>
+                </div>
+            </div>
+
+            <div class="stat-card bg-white rounded-xl p-6 shadow-lg border-l-4 border-green-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Best WPM</p>
+                        <p class="text-2xl font-bold text-gray-800">{{ stats.best_wpm }}</p>
+                    </div>
+                    <div class="text-3xl text-green-500">⚡</div>
+                </div>
+            </div>
+
+            <div class="stat-card bg-white rounded-xl p-6 shadow-lg border-l-4 border-purple-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Best Accuracy</p>
+                        <p class="text-2xl font-bold text-gray-800">{{ stats.best_accuracy }}%</p>
+                    </div>
+                    <div class="text-3xl text-purple-500">🎯</div>
+                </div>
+            </div>
+
+            <div class="stat-card bg-white rounded-xl p-6 shadow-lg border-l-4 border-orange-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Total Tests</p>
+                        <p class="text-2xl font-bold text-gray-800">{{ stats.total_tests }}</p>
+                    </div>
+                    <div class="text-3xl text-orange-500">📊</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid lg:grid-cols-3 gap-8">
+            <!-- Progress Chart -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl p-6 shadow-lg">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-800">Your Progress</h3>
+                    <canvas id="progressChart" width="400" height="200"></canvas>
+                </div>
+
+                <!-- Start Test Button -->
+                <div class="mt-6 text-center">
+                    <a href="/test" class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition duration-300 transform hover:scale-105 shadow-lg">
+                        <i class="fas fa-play mr-3"></i>Start New Typing Test
+                    </a>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                <!-- Badges Section -->
+                <div class="bg-white rounded-xl p-6 shadow-lg">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-800">Your Badges 🏆</h3>
+                    {% if stats.badges %}
+                        <div class="grid grid-cols-2 gap-3">
+                            {% for badge in stats.badges[:4] %}
+                            <div class="badge-item bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg p-3 text-center cursor-pointer" onclick="showBadgeModal('{{ badge.title }}', '{{ badge.description }}')">
+                                <div class="text-2xl mb-1">🏆</div>
+                                <div class="text-xs text-white font-semibold">{{ badge.title }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% if stats.badges|length > 4 %}
+                        <div class="text-center mt-3">
+                            <button class="text-blue-600 hover:text-blue-800 text-sm font-medium">View All Badges</button>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center text-gray-500 py-4">
+                            <div class="text-4xl mb-2">🎯</div>
+                            <p class="text-sm">Complete tests to earn badges!</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Other Users -->
+                <div class="bg-white rounded-xl p-6 shadow-lg">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-800">Top Performers</h3>
+                    {% if all_users %}
+                        <div class="space-y-3">
+                            {% for user in all_users %}
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition duration-300">
+                                <div>
+                                    <a href="/user/{{ user.id }}" class="font-medium text-gray-800 hover:text-blue-600">{{ user.name }}</a>
+                                    <div class="text-sm text-gray-600">{{ user.best_wpm }} WPM</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-sm text-gray-600">{{ user.current_streak }} day streak</div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Badge Modal -->
+    <div id="badgeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-8 max-w-md mx-4 text-center">
+            <div class="text-6xl mb-4">🏆</div>
+            <h3 id="badgeTitle" class="text-2xl font-bold mb-2"></h3>
+            <p id="badgeDescription" class="text-gray-600 mb-6"></p>
+            <div class="flex space-x-3 justify-center mb-4">
+                <button onclick="shareToSocial('whatsapp')" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition duration-300">
+                    <i class="fab fa-whatsapp mr-2"></i>WhatsApp
+                </button>
+                <button onclick="shareToSocial('twitter')" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-300">
+                    <i class="fab fa-twitter mr-2"></i>Twitter
+                </button>
+            </div>
+            <button onclick="closeBadgeModal()" class="w-full bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition duration-300">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // Progress Chart
+        const ctx = document.getElementById('progressChart').getContext('2d');
+        const recentResults = {{ stats.recent_results | tojson | safe }};
+
+        
+        const labels = recentResults.map((result, index) => `Test ${recentResults.length - index}`).reverse();
+        const wpmData = recentResults.map(result => result.wpm).reverse();
+        const accuracyData = recentResults.map(result => result.accuracy).reverse();
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'WPM',
+                    data: wpmData,
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    yAxisID: 'y'
+                }, {
+                    label: 'Accuracy (%)',
+                    data: accuracyData,
+                    borderColor: 'rgb(34, 197, 94)',
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    tension: 0.4,
+                    yAxisID: 'y1'
+                }]
+            },
+            options: {
+                responsive: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Recent Tests'
+                        }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Words Per Minute'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Accuracy (%)'
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                    }
+                }
+            }
+        });
+
+        // Badge modal functions
+        function showBadgeModal(title, description) {
+            document.getElementById('badgeTitle').textContent = title;
+            document.getElementById('badgeDescription').textContent = description;
+            document.getElementById('badgeModal').classList.remove('hidden');
+            document.getElementById('badgeModal').classList.add('flex');
+        }
+
+        function closeBadgeModal() {
+            document.getElementById('badgeModal').classList.add('hidden');
+            document.getElementById('badgeModal').classList.remove('flex');
+        }
+
+        function shareToSocial(platform) {
+            const title = document.getElementById('badgeTitle').textContent;
+            const message = `🎉 I just earned a new badge on TypingMaster: ${title}! Join me and improve your typing skills!`;
+            
+            let url;
+            switch(platform) {
+                case 'whatsapp':
+                    url = `https://wa.me/?text=${encodeURIComponent(message)}`;
+                    break;
+                case 'twitter':
+                    url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}&url=${encodeURIComponent(window.location.origin)}`;
+                    break;
+                case 'telegram':
+                    url = `https://t.me/share/url?url=${encodeURIComponent(window.location.origin)}&text=${encodeURIComponent(message)}`;
+                    break;
+            }
+            
+            if (url) {
+                window.open(url, '_blank');
+            }
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('badgeModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeBadgeModal();
+            }
+        });
+    </script>
+</body>
+</html>
