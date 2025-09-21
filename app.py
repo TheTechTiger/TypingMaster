@@ -257,6 +257,10 @@ def typing_text():
     import random
     return jsonify({'text': random.choice(texts)})
 
+@app.route('/favicon.ico')
+def favicon():
+    return send_file('favico.png', mimetype='image/png')
+
 @app.route('/get-typing-stats')
 @login_required
 def get_typing_stats():
