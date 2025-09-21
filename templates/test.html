@@ -15,6 +15,9 @@
             font-size: 1.2rem;
             line-height: 1.8;
             letter-spacing: 0.02em;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
         }
         
         .gradient-bg {
@@ -212,6 +215,7 @@
         let totalChars = 0;
         let errors = 0;
         let motivationalQuote = '';
+        let typedChars = []; // Track typed characters and their correctness
 
         // Load typing text
         async function loadTypingText() {
@@ -236,13 +240,18 @@
                 const char = testText[i];
                 let className = '';
                 
-                if (i < currentIndex) {
-                    className = 'correct-char';
+                if (i < typedChars.length) {
+                    // Character has been typed
+                    if (typedChars[i] === true) {
+                        className = 'correct-char';
+                    } else if (typedChars[i] === false) {
+                        className = 'incorrect-char';
+                    }
                 } else if (i === currentIndex && isTestActive) {
                     className = 'current-char';
                 }
                 
-                html += `<span class="${className}">${char === ' ' ? '&nbsp;' : char}</span>`;
+                html += `<span class="${className}">${char === ' ' ? '&nbsp;' : char === '\n' ? '<br>' : char}</span>`;
             }
             
             textContainer.innerHTML = html;
@@ -259,6 +268,7 @@
             totalChars = 0;
             errors = 0;
             timeLeft = 60;
+            typedChars = []; // Reset typed characters array
             
             document.getElementById('start-btn').classList.add('hidden');
             document.getElementById('restart-btn').classList.remove('hidden');
@@ -267,9 +277,9 @@
             displayText();
             startTimer();
             
-            // Add event listener for typing
+            // Add event listeners for typing
             document.getElementById('typing-input').addEventListener('input', handleTyping);
-            document.addEventListener('keydown', preventBackspace);
+            document.getElementById('typing-input').addEventListener('keydown', handleKeyDown);
         }
 
         // Handle typing
