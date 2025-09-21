@@ -1,22 +1,12 @@
 import os
-import json
-import secrets
-from datetime import datetime, timedelta
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_file
-from flask_mail import Mail, Message
-import sqlite3
 from functools import wraps
-import requests
-from urllib.parse import urlencode
 import hashlib
-import hmac
 from database import init_db, get_user_by_email, create_user, save_typing_result, get_user_stats, get_leaderboard, get_user_by_id, update_user_streak, get_all_users, create_badge
 from auth import verify_google_token, send_verification_email
 import edge_tts
 import asyncio
-import io
 import base64
-import os
 
 if os.name == 'nt':
     with open(".env", "r") as file:

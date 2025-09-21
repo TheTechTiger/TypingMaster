@@ -5,7 +5,6 @@ import hashlib
 import secrets
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from flask import current_app
 
 def verify_google_token(token):
     """Verify Google OAuth token and return user info"""
